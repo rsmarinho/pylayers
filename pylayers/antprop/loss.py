@@ -903,7 +903,7 @@ def Losst(L,fGHz,p1,p2,dB=True,bceilfloor=False):
 
     # as many slabs as segments and subsegments
     us = data['s']
-    slabs = np.array([ L.Gs.node[x]['name'] for x in us ])
+    slabs = np.array([ L.Gs.nodes[x]['name'] for x in us ])
 
 
     #slabs = L.sla[us]

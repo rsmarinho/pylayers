@@ -1541,7 +1541,7 @@ class Rays(PyLayers, dict):
                         u  = np.where(anstr==s)
                         if len(u)>0:
                             zs = ptees[2,u[0],u[1]]
-                            zinterval = L.Gs.node[s]['z']
+                            zinterval = L.Gs.nodes[s]['z']
                             unot_in_interval = ~((zs<=zinterval[1]) & (zs>=zinterval[0]))
                             ray_to_delete.extend(u[1][unot_in_interval])
 
@@ -1577,10 +1577,13 @@ class Rays(PyLayers, dict):
                             # delete rays where diffraction point is connected to
                             # 2 AIR segments
                             #
-
+                            # print(type(ltu_slab))
+                            vals = list(ltu_slab)
                             [ray_to_delete.append(u[1][i]) for i in range(len(zp))
-                            if ((ltu_slab[i][0]=='AIR') & (ltu_slab[i][1]=='AIR'))]
-                            # #zinterval = L.Gs.node[s]['z']
+                            if ((vals[i][0]=='AIR') & (vals[i][1]=='AIR'))]
+                            # [ray_to_delete.append(u[1][i]) for i in range(len(zp))
+                            # if ((ltu_slab[i][0]=='AIR') & (ltu_slab[i][1]=='AIR'))]
+                            # #zinterval = L.Gs.nodes[s]['z']
                             # # if (zs<=zinterval[1]) & (zs>=zinterval[0]):
                             # if ((tu_slab[0]!='AIR') & (tu_slab[1]!='AIR')):
                             #     #print(npt , zp)
@@ -1607,19 +1610,23 @@ class Rays(PyLayers, dict):
                         # to determine the cycle where ceil reflexions append
                         # uinter(nb pt x nb cycles)
                         mapnode = list(L.Gt.nodes())
-                        uinter = np.array([[L.Gt.node[x]['polyg'].contains(p) for x in mapnode if x>0] for p in P])
+                        uinter = np.array([[L.Gt.nodes[x]['polyg'].contains(p) for x in mapnode if x>0] for p in P])
                         # import ipdb
                         # ipdb.set_trace()
                         #[plt.scatter(p.xy[0],p.xy[1],c='r') for up,p in enumerate(P) if uinter[0,up]]
                         #[ plt.scatter(p.xy[0],p.xy[1],c='r') for up,p in enumerate(P) if uinter[0,up]]
                         # find points are indoor/outdoor cycles
                         upt,ucy = np.where(uinter)
-                        uout = np.where([not L.Gt.node[mapnode[u+1]]['indoor'] for u in ucy])[0] #ucy+1 is to manage cycle 0
+                        uout = np.where([not L.Gt.nodes[mapnode[u+1]]['indoor'] for u in ucy])[0] #ucy+1 is to manage cycle 0
                         # 3 remove ceil reflexions of outdoor cycles
                         if len(uout)>0:
+                            # print(f"rafael : {ptees}, {uc[1][uout]}")
                             ptees = np.delete(ptees,uc[1][uout],axis=2)
                             siges = np.delete(siges,uc[1][uout],axis=2)
-                            sigsave = np.delete(sigsave,uc[1][uout],axis=2)
+                            #sigsave = np.delete(sigsave,uc[1][uout],axis=2)
+                            # RSM
+                            if not sigsave.any():
+                                sigsave = np.delete(sigsave,uc[1][uout],axis=2)
 
                 if k+Nint in r3d:
                     r3d[k+Nint]['pt']  = np.dstack((r3d[k+Nint]['pt'], ptees))
@@ -1733,7 +1740,7 @@ class Rays(PyLayers, dict):
 
         """
 
-        v=np.vectorize( lambda t: L.Gs.node[t]['name'] if (t!=0) and (t>0) else '_')
+        v=np.vectorize( lambda t: L.Gs.nodes[t]['name'] if (t!=0) and (t>0) else '_')
         return v(self[ir]['sig'][0])
 
 
@@ -1925,7 +1932,7 @@ class Rays(PyLayers, dict):
         # maximum number for refering to segment
         # not to be confused with a segment number
 
-        nsmax = max(L.Gs.node.keys())
+        nsmax = max(L.Gs.nodes.keys())
 
         mapping = np.zeros(nsmax+1, dtype=int)
 
@@ -2271,10 +2278,10 @@ class Rays(PyLayers, dict):
                     #pdb.set_trace()
                     pts = np.array([ L.seg2pts([x[0],x[1]]) for x in aseg ])
 
-                    #self[k]['diffslabs']=[str(L.sl[L.Gs.node[x[0]]['name']])+'_'
-                    #                    + str(L.sl[L.Gs.node[x[1]]['name']]]) for x in aseg]
-                    self[k]['diffslabs']=[ L.Gs.node[x[0]]['name']+'@'
-                                        +  L.Gs.node[x[1]]['name'] for x in aseg]
+                    #self[k]['diffslabs']=[str(L.sl[L.Gs.nodes[x[0]]['name']])+'_'
+                    #                    + str(L.sl[L.Gs.nodes[x[1]]['name']]]) for x in aseg]
+                    self[k]['diffslabs']=[ L.Gs.nodes[x[0]]['name']+'@'
+                                        +  L.Gs.nodes[x[1]]['name'] for x in aseg]
 
                     uwl = np.unique(self[k]['diffslabs']).tolist()
                     luw.extend(uwl)
@@ -2552,7 +2559,7 @@ class Rays(PyLayers, dict):
         #for s in uslv:
         #    dsla[s] = np.where(s == np.array(slv))[0]
 
-        nsmax = max(L.Gs.node.keys())
+        nsmax = max(L.Gs.nodes.keys())
         #sla = np.zeros((nsmax+1), dtype='S20')
 
         # array type str with more than 1 character
@@ -2699,8 +2706,8 @@ class Rays(PyLayers, dict):
                 # assign floor and ceil slab
                 ############################
 
-                slT = [ L.Gs.node[x]['name'] for x in nstrf[uT] ]
-                slR = [ L.Gs.node[x]['name'] for x in nstrf[uR] ]
+                slT = [ L.Gs.nodes[x]['name'] for x in nstrf[uT] ]
+                slR = [ L.Gs.nodes[x]['name'] for x in nstrf[uR] ]
 
                 # WARNING
                 # in future versions floor and ceil could be different for each cycle.
@@ -3121,7 +3128,7 @@ class Rays(PyLayers, dict):
 
         """
 
-        v=np.vectorize( lambda t: L.Gs.node[t]['name'] if (t!=0) and (t>0) else '_')
+        v=np.vectorize( lambda t: L.Gs.nodes[t]['name'] if (t!=0) and (t>0) else '_')
         return v(self[ir]['sig'][0])
 
 
@@ -3307,7 +3314,7 @@ class Rays(PyLayers, dict):
         raypos = np.nonzero(self[nbi]['rayidx'] == ir)[0]
         pt = self[nbi]['pt'][:,:,raypos]
         tz  = pt[2].ravel()
-        slab = [ L.Gs.node[x]['name'] for x in slab_nb if x > 0]
+        slab = [ L.Gs.nodes[x]['name'] for x in slab_nb if x > 0]
         st = ''
         for t in typ:
             st = st + t+'      ' 
@@ -3381,8 +3388,8 @@ class Rays(PyLayers, dict):
                     slabname='FLOOR'
                     cyc =[-2,-3]
                 else:
-                    slabname = L.Gs.node[six]['name']
-                    cyc = L.Gs.node[six]['ncycles']
+                    slabname = L.Gs.nodes[six]['name']
+                    cyc = L.Gs.nodes[six]['ncycles']
                 if typ[k-1]=='T':
                     fd.write('T '+slabname +'       ('+str(six)+','+str(cyc[0])+','+str(cyc[1])+')')
                 if typ[k-1]=='R':

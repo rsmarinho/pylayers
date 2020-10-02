@@ -1,0 +1,15 @@
+mkdir pylayers_installation
+cd pylayers_installation
+
+git clone https://github.com/rsmarinho/pylayers.git
+
+virtualenv --clear env
+source env/bin/activate
+pip install numpy pyqt5
+pip install git+https://github.com/matplotlib/basemap.git
+
+cd pylayers/
+./installer_unix 
+pip install -r requirements.txt 
+
+python plot_exLuebbers.py 

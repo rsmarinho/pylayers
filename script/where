@@ -1,3 +1,0 @@
-#!/bin/bash
-grep -n $1 `find $PYLAYERS/pylayers "*.py"`
-
